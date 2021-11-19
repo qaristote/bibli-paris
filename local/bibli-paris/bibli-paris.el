@@ -360,7 +360,7 @@ being encoded as a list of strings."
 https://bibliotheques.paris.fr/ whose path is given by CSV-FILE (string).
 All the imported entries are set with the tag TAGS (string) and in the state
 STATE (string)."
-  (interactive "fImport from : \nsTags : ")
+  (interactive "fImport from : \nsTags : \nsState (default : TODO) : ")
   (let ((recnum-lines (make-hash-table :test 'equal
                                        :size (bibli-paris/number-of-entries)
                                        :weakness 'key-and-value))
