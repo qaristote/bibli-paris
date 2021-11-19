@@ -399,7 +399,12 @@ STATE (string)."
   (interactive)
   (org-map-entries (lambda ()
                      (if (equal (org-get-todo-state) "DONE")
-                         (org-archive-subtree)))))
+                         (progn
+                           ;; archiving an entry moves the cursor to next entry
+                           ;; so we move it back to the previous entry
+                           (org-archive-subtree)
+                           (setq org-map-continue-from (outline-get-last-sibling))
+                           )))))
 
 ;; minor mode
 
