@@ -82,6 +82,7 @@
   (interactive)
   (length (org-map-entries (lambda () t))))
 
+
 ;; sort entries
 
 ;;;###autoload
