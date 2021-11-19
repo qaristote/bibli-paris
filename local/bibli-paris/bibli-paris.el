@@ -32,6 +32,10 @@
   "The maximum number of asynchronous processes that can be launched by Emacs.
    Determined experimentally.")
 
+(defvar bibli-paris/default-path-to-csv
+  "~/Downloads/Export.csv"
+  "The default path of a CSV file to import.")
+
 
 ;; utils
 
@@ -343,40 +347,47 @@ that defaults to TODO.). If an entry has a record number found in RECNUM-POMS
                       (bibli-paris/insert-csv-entry keys row tags state line))))))
           rows))
 
-(defun bibli-paris/parse-csv (csv-file)
-  "Load a CSV file named CSV-FILE (string) into a list of rows, each row being
+(defun bibli-paris/parse-csv (path-to-csv)
+  "Load a CSV file from PATH-TO-CSV (string) into a list of rows, each row being
 being encoded as a list of strings."
   (let ((csv-buffer (generate-new-buffer "bibli-paris/csv-to-import-from")))
     (let ((result
            (save-current-buffer
              (set-buffer csv-buffer)
-             (insert-file-contents csv-file)
+             (insert-file-contents path-to-csv)
              (parse-csv-string-rows (buffer-string) ?\; ?\" "\n"))))
       (kill-buffer csv-buffer)
       result)))
 
 ;;;###autoload
-(defun bibli-paris/import-from-csv (csv-file &optional tags state)
+(defun bibli-paris/import-from-csv (&optional path-to-csv tags state)
   "Import entries from the CSV file downloaded on
-https://bibliotheques.paris.fr/ whose path is given by CSV-FILE (string).
+https://bibliotheques.paris.fr/ whose path is given by PATH-TO-CSV (string).
 All the imported entries are set with the tag TAGS (string) and in the state
 STATE (string)."
-  (interactive "fImport from : \nsTags : \nsState (default : TODO) : ")
+  (interactive (list (read-file-name "Import from : "
+                                     nil
+                                     nil
+                                     nil
+                                     bibli-paris/default-path-to-csv)
+                     (read-string "Tags : ")
+                     (read-string "State (default : TODO) : ")))
   (let ((recnum-lines (make-hash-table :test 'equal
                                        :size (bibli-paris/number-of-entries)
                                        :weakness 'key-and-value))
         (entry-number 0)
-        (csv-rows (bibli-paris/parse-csv csv-file)))
-    (message "Importing library entries from %s ..." csv-file)
+        (path-to-csv (if path-to-csv path-to-csv bibli-paris/default-path-to-csv)))
+    (message "Importing library entries from %s ..." path-to-csv)
     (org-map-entries (lambda ()
                        (progn
                          (puthash (bibli-paris/get-entry-recnum) entry-number recnum-lines)
                          (setq entry-number (1+ entry-number)))))
-    (bibli-paris/insert-or-update-csv-entries (car csv-rows)
-                                              (cdr csv-rows)
-                                              recnum-lines
-                                              tags
-                                              state)
+    (let ((csv-rows (bibli-paris/parse-csv path-to-csv)))
+      (bibli-paris/insert-or-update-csv-entries (car csv-rows)
+                                                (cdr csv-rows)
+                                                recnum-lines
+                                                tags
+                                                state))
     (message "Import done.")))
 
 
