@@ -356,7 +356,10 @@ being encoded as a list of strings."
 
 ;;;###autoload
 (defun bibli-paris/import-from-csv (csv-file &optional tags state)
-  ""
+  "Import entries from the CSV file downloaded on
+https://bibliotheques.paris.fr/ whose path is given by CSV-FILE (string).
+All the imported entries are set with the tag TAGS (string) and in the state
+STATE (string)."
   (interactive "fImport from : \nsTags : ")
   (let ((recnum-lines (make-hash-table :test 'equal
                                        :size (bibli-paris/number-of-entries)
