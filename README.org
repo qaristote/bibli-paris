@@ -18,7 +18,7 @@ interested in. Select them and export your selection as a CSV file ~Export.csv~.
 
 Next, create your reading list file ~my_reading_list.org~ and open it in Emacs.
 
-Finally, call the function ~bibli-paris/import-from-csv~ with argument the path
+Finally, call the ~bibli-paris/import-from-csv~ function with argument the path
 to ~Export.csv~.
 
 * Commands
