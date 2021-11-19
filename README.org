@@ -8,8 +8,8 @@ libraries.
 
 ** Enabling the layer
 
-Clone this buffer in your ~.emacs.d/private/layers~ folder and enable the layer
-in your ~.spacemacs~ file.
+Clone this repository in your ~.emacs.d/private/layers~ folder and enable the
+layer in your ~.spacemacs~ file.
 
 ** Creating a reading list file
 
