@@ -84,7 +84,9 @@
 (defun bibli-paris/number-of-entries ()
   "Return the number library entries in the current buffer."
   (interactive)
-  (message (length (org-map-entries (lambda () t)))))
+  (let ((result (length (org-map-entries (lambda () t)))))
+    (message "%d" result)
+    result))
 
 
 ;; sort entries
