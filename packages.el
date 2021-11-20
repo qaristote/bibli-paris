@@ -12,7 +12,9 @@
               (spacemacs/set-leader-keys-for-minor-mode 'bibli-paris/mode
                 "m?" 'bibli-paris/number-of-entries
                 "ms" 'bibli-paris/sort
-                "mu" 'bibli-paris/update-entry
+                "mue" 'bibli-paris/update-entry
+                "mur" 'bibli-paris/update-region
+                "mub" 'bibli-paris/update-buffer
                 "mU" 'bibli-paris/update-entries
                 "mA" 'bibli-paris/archive-all-read
                 "mi" 'bibli-paris/import-from-csv

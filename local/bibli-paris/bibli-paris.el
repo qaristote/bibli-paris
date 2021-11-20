@@ -289,24 +289,37 @@ sequentially. Terribly inefficient but works."
                       (deferred:call 'goto-char pom)
                       (deferred:nextc it 'bibli-paris/update-entry))))))
 
-(defun bibli-paris/update-entries-batch ()
-  "Update all entries' schedules and quotes, by batches so as to prevent
-emacs from opening too many files."
-  (let ((poms (org-map-entries (lambda ()
-                                 `(,(point) . ,(bibli-paris/get-entry-recnum))))))
+(defun bibli-paris/update-entries-batch (scope)
+  "Update schedules and quotes, by batches so as to prevent emacs from opening
+too many files, for every entry in the SCOPE (see the documentation entry for
+org-map-entries)"
+  (let ((pom-recnum-seq (org-map-entries
+                         (lambda ()
+                           ;; (point) is incremented to prevent off-by-one
+                           ;; errors when navigating the buffer
+                           `(,(+ 5 (point)) . ,(bibli-paris/get-entry-recnum)))
+                         nil scope)))
+    (message "%s" pom-recnum-seq)
     (deferred:$
       (deferred:next (lambda () (message "Update started.")))
       (deferred:loop
-        (seq-partition (seq-reverse poms) bibli-paris/max-asynchronous-processes)
+        (seq-partition (seq-reverse pom-recnum-seq)
+                       bibli-paris/max-asynchronous-processes)
         'bibli-paris/async-update-entries-at-points)
-      (deferred:nextc it 'bibli-paris/sort)
+      ;; (deferred:nextc it 'bibli-paris/sort)
       (deferred:nextc it (lambda () (message "Update done."))))))
 
 ;;;###autoload
-(defun bibli-paris/update-entries ()
-  "Update all entries' schedules and quotes."
+(defun bibli-paris/update-region ()
+  "Update the schedules and quotes of the entries in the current region."
   (interactive)
-  (bibli-paris/update-entries-batch))
+  (bibli-paris/update-entries-batch 'region))
+
+;;;###autoload
+(defun bibli-paris/update-buffer ()
+  "Update the schedules and quotes of the entries in the current buffer."
+  (interactive)
+  (bibli-paris/update-entries-batch nil))
 
 
 ;; import entries
