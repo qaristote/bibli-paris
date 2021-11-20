@@ -16,10 +16,10 @@ layer in your ~.spacemacs~ file.
 First, go to https://bibliotheques.paris.fr/ and look up documents you're
 interested in. Select them and export your selection as a CSV file ~Export.csv~.
 
-Next, create your reading list file ~my_reading_list.org~ and open it in Emacs.
+Next, create your reading list file =my_reading_list.org= and open it in Emacs.
 
-Finally, call the ~bibli-paris/import-from-csv~ function with argument the path
-to ~Export.csv~.
+Finally, call the =bibli-paris/import-from-csv= function with argument the path
+to =Export.csv=.
 
 * Commands
 
@@ -27,15 +27,15 @@ The following commands are available.
 
 | Command                         | Shortcut | Description                                                                                                                                                                                                                          |
 |---------------------------------+----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ~bibli-paris/mode~              | ~SPC mb~ | Enable the shortcuts described in this table.                                                                                                                                                                                        |
-| ~bibli-paris/import-from-csv~   | ~SPC mi~ | Import entries from the CSV file downloaded on https://bibliotheques.paris.fr/. The first argument is the path to the CSV file, and the second and third (optional) arguments are the tags and state to set the imported entries to. |
-| ~bibli-paris/sort~              | ~SPC ms~ | Sort the entries by their quotes.                                                                                                                                                                                                    |
-| ~bibli-paris/update-entry~      | ~SPC mu~ | Asynchronously update the availability status and quote of the entry at point.                                                                                                                                                       |
-| ~bibli-paris/update-entries~    | ~SPC mU~ | Asynchronously update all the availabity status and quotes of all entries in parallel.                                                                                                                                               |
-| ~bibli-paris/archive-all-read~  | ~SPC mA~ | Archive all entries in the ~DONE~ state.                                                                                                                                                                                             |
-| ~bibli-paris/number-of-entries~ | ~SPC m?~ | Display the number of entries in the current buffer.                                                                                                                                                                                 |
-| ~bibli-paris/previous-entry~    | ~SPC mk~ | Move the cursor to and put forward the previous entry.                                                                                                                                                                               |
-| ~bibli-paris/next-entry~        | ~SPC mj~ | Move the cursor to and put forward the next entry.                                                                                                                                                                                   |
+| =bibli-paris/mode=              | =SPC mb= | Enable the shortcuts described in this table.                                                                                                                                                                                        |
+| =bibli-paris/import-from-csv=   | =SPC mi= | Import entries from the CSV file downloaded on https://bibliotheques.paris.fr/. The first argument is the path to the CSV file, and the second and third (optional) arguments are the tags and state to set the imported entries to. |
+| =bibli-paris/sort=              | =SPC ms= | Sort the entries by their quotes.                                                                                                                                                                                                    |
+| =bibli-paris/update-entry=      | =SPC mu= | Asynchronously update the availability status and quote of the entry at point.                                                                                                                                                       |
+| =bibli-paris/update-entries=    | =SPC mU= | Asynchronously update all the availabity status and quotes of all entries in parallel.                                                                                                                                               |
+| =bibli-paris/archive-all-read=  | =SPC mA= | Archive all entries in the =DONE= state.                                                                                                                                                                                             |
+| =bibli-paris/number-of-entries= | =SPC m?= | Display the number of entries in the current buffer.                                                                                                                                                                                 |
+| =bibli-paris/previous-entry=    | =SPC mk= | Move the cursor to and put forward the previous entry.                                                                                                                                                                               |
+| =bibli-paris/next-entry=        | =SPC mj= | Move the cursor to and put forward the next entry.                                                                                                                                                                                   |
 
 * Customization
 
@@ -43,6 +43,6 @@ The following variables may be customized.
 
 | Variable name                            | Type    | Default value                  | Description                                                                                                                                                          |
 |------------------------------------------+---------+--------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ~bibli-paris/default-library~            | string  | ~75013 - Jean-Pierre Melville~ | The library from which to fetch updates.                                                                                                                             |
-| ~bibli-paris/max-asynchronous-processes~ | integer | ~500~                          | The maximum number of asynchronous requests that should be launched in parallel. The default value was determined experimentally to be the maximum allowed by Emacs. |
-| ~bibli-paris/default-path-to-csv~        | string  | ~~/Downloads/Export.csv~       | The default path of a CSV file to import.                                                                                                                            |
+| =bibli-paris/default-library=            | string  | =75013 - Jean-Pierre Melville= | The library from which to fetch updates.                                                                                                                             |
+| =bibli-paris/max-asynchronous-processes= | integer | =500=                          | The maximum number of asynchronous requests that should be launched in parallel. The default value was determined experimentally to be the maximum allowed by Emacs. |
+| =bibli-paris/default-path-to-csv=        | string  | =~/Downloads/Export.csv=     | The default path of a CSV file to import.                                                                                                                            |
