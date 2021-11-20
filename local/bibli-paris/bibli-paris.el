@@ -406,6 +406,25 @@ STATE (string)."
                            (setq org-map-continue-from (outline-get-last-sibling))
                            )))))
 
+
+;; move between entries
+
+(defun bibli-paris/change-entry (move-fun)
+  "Run the MOVE-FUN function and put forward the resulting entry at point."
+  (org-hide-entry)
+  (funcall move-fun)
+  (org-show-subtree)
+  (recenter))
+
+(defun bibli-paris/previous-entry ()
+  "Move to and put forward the previous entry."
+  (bibli-paris/change-entry 'outline-get-last-sibling))
+
+(defun bibli-paris/next-entry ()
+  "Move to and put forward the next entry."
+  (bibli-paris/change-entry 'outline-get-next-sibling))
+
+
 ;; minor mode
 
 ;;;###autoload
