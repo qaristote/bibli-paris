@@ -240,10 +240,14 @@ at the central library."
 ;;;###autoload
 (defun bibli-paris/update-entry ()
   "Update the schedule and quote of the entry at point."
-  (interactive
+  (interactive)
    (deferred:$
+     (deferred:call 'message
+       "Fetching holdings for %s (%s) ..."
+       (bibli-paris/get-entry-title)
+       (bibli-paris/get-entry-author))
      (bibli-paris/fetch-entry-holdings-by-id (bibli-paris/get-entry-recnum))
-     (deferred:nextc it 'bibli-paris/update-entry-from))))
+     (deferred:nextc it 'bibli-paris/update-entry-from)))
 
 (defun bibli-paris/async-update-entries-at-points (pom-recnum-seq)
   "Update all entries specified by their positions and record numbers in
