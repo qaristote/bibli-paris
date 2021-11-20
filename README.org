@@ -21,6 +21,18 @@ Next, create your reading list file =my_reading_list.org= and open it in Emacs.
 Finally, call the =bibli-paris/import-from-csv= function with argument the path
 to =Export.csv=.
 
+** Using with Orgzly
+
+To use the Orgzly mobile app with a reading list, the following searches may be useful.
+
+| Name                           | Query                                                                     |
+|--------------------------------+---------------------------------------------------------------------------|
+| To borrow                      | =b.my_reading_list .i.DONE s.None .o.st=                                  |
+| To book                        | =b.my_reading_list (i.TODO OR i.NEXT) s.ge.-100y .o.st=                   |
+| To book at the central reserve | =b.my_reading_list (i.TODO OR i.NONE) t.RéserveCentrale s.ge.-100y .o.st= |
+| Booked                         | =b.my_reading_list i.BOOKED .o.st=                                        |
+
+
 * Commands
 
 The following commands are available.
