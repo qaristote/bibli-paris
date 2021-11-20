@@ -191,10 +191,10 @@ entry from a library."
     (save-excursion
       (org-back-to-heading)
       (org-end-of-meta-data)
-      (if new-quote (progn
-                      (newline)
-                      (insert new-quote)
-                      (newline)))
+      (when new-quote
+        (newline)
+        (insert new-quote)
+        (newline))
       (setq begin (point))
       (org-next-visible-heading 1)
       (setq end (point))
@@ -301,68 +301,68 @@ emacs from opening too many files."
 values in ROW, and set the tags TAGS (string seq) and the state STATE (string that
 defaults to TODO.). If OLD is not nil, only update the properties and tags without
 inserting the heading."
-  (let ((title (bibli-paris/get-csv-title row))
-        (recnum (bibli-paris/get-csv-recnum row)))
-    (let ((heading (format "* %s [[%s][%s]]"
-                           (if state state "TODO")
-                           (concat bibli-paris/base-entry-url recnum)
-                           title)))
-      (if (not old)
-          (progn (newline) (insert heading)))
-      (cl-mapc (lambda (key value)
-                 (let ((formatted-key (upcase
-                                       (replace-regexp-in-string " " "_"
-                                                                 key)))
-                       (formatted-value (string-trim value)))
-                   (if (not (string-equal formatted-value ""))
-                       (org-set-property formatted-key formatted-value))))
-               keys row)
-      (org-toggle-tag tags 'on))))
+  (let* ((title (bibli-paris/get-csv-title row))
+         (recnum (bibli-paris/get-csv-recnum row))
+         (heading (format "* %s [[%s][%s]]"
+                          (if state state "TODO")
+                          (concat bibli-paris/base-entry-url recnum)
+                          title)))
+    (unless old
+      (newline)
+      (insert heading))
+    (cl-mapc (lambda (key value)
+               (let ((formatted-key (upcase
+                                     (replace-regexp-in-string " " "_"
+                                                               key)))
+                     (formatted-value (string-trim value)))
+                 (if (not (string-equal formatted-value ""))
+                     (org-set-property formatted-key formatted-value))))
+             keys row)
+    (org-toggle-tag tags 'on)))
 
 (defun bibli-paris/insert-or-update-csv-entries (keys rows recnum-lines
                                                       &optional tags state)
   "Insert entries described by a list of keys KEYS and associated to values in
-ROW at point. Also set the tags TAGS (string seq) and the state STATE (string
-that defaults to TODO.). If an entry has a record number found in RECNUM-POMS
-(string to marker hash table), only update the entry at corresponding point
-(without inserting the heading)."
+ROW at the end of the buffer. Also set the tags TAGS (string seq) and the state
+STATE (string that defaults to TODO.). If an entry has a record number found in
+RECNUM-POMS (string to marker hash table), only update the entry at
+corresponding point (without inserting the heading)."
   ;; TODO : remove race conditions
   (seq-do (lambda (row)
-            (let ((recnum (bibli-paris/get-csv-recnum row)))
-              (if recnum
-                  (let ((line (gethash recnum recnum-lines)))
-                    (save-excursion
-                      (if line
-                          (progn
-                            (goto-char (point-min))
-                            (org-next-visible-heading line)
-                            (message "Updating %s (%s) ..."
-                                     (bibli-paris/get-entry-title)
-                                     (bibli-paris/get-entry-author)))
-                        (progn
-                          (goto-char (point-max))
-                          (message "Inserting %s (%s) ..."
-                                   (bibli-paris/get-entry-title)
-                                   (bibli-paris/get-entry-author))))
-                      (bibli-paris/insert-csv-entry keys row tags state line))))))
+            (when-let (recnum (bibli-paris/get-csv-recnum row))
+              (save-excursion
+                (if-let (line (gethash recnum recnum-lines))
+                    (progn
+                      (goto-char (point-min))
+                      (org-next-visible-heading line)
+                      (message "Updating %s (%s) ..."
+                               (bibli-paris/get-entry-title)
+                               (bibli-paris/get-entry-author)))
+                  (goto-char (point-max))
+                  (message "Inserting %s (%s) ..."
+                           (bibli-paris/get-entry-title)
+                           (bibli-paris/get-entry-author))
+                  (bibli-paris/insert-csv-entry keys row tags state line)
+              ))))
           rows))
 
 (defun bibli-paris/parse-csv (path-to-csv)
   "Load a CSV file from PATH-TO-CSV (string) into a list of rows, each row being
 being encoded as a list of strings."
-  (let ((csv-buffer (generate-new-buffer "bibli-paris/csv-to-import-from")))
-    (let ((result
-           (save-current-buffer
-             (set-buffer csv-buffer)
-             (insert-file-contents path-to-csv)
-             (parse-csv-string-rows (buffer-string) ?\; ?\" "\n"))))
-      (kill-buffer csv-buffer)
-      result)))
+  (let* ((csv-buffer (generate-new-buffer "bibli-paris/csv-to-import-from"))
+         (result (save-current-buffer
+                   (set-buffer csv-buffer)
+                   (insert-file-contents path-to-csv)
+                   (parse-csv-string-rows (buffer-string) ?\; ?\" "\n"))))
+    (kill-buffer csv-buffer)
+    result))
 
 ;;;###autoload
 (defun bibli-paris/import-from-csv (&optional path-to-csv tags state)
   "Import entries from the CSV file downloaded on
 https://bibliotheques.paris.fr/ whose path is given by PATH-TO-CSV (string).
+New entries are inserted at the end of the buffer and the other entries are
+updated.
 All the imported entries are set with the tag TAGS (string) and in the state
 STATE (string)."
   (interactive (list (read-file-name "Import from : "
@@ -372,23 +372,22 @@ STATE (string)."
                                      bibli-paris/default-path-to-csv)
                      (read-string "Tags : ")
                      (read-string "State (default : TODO) : ")))
-  (let ((recnum-lines (make-hash-table :test 'equal
-                                       :size (bibli-paris/number-of-entries)
-                                       :weakness 'key-and-value))
-        (entry-number 0)
-        (path-to-csv (if path-to-csv path-to-csv bibli-paris/default-path-to-csv)))
+  (let* ((recnum-lines (make-hash-table :test 'equal
+                                         :size (bibli-paris/number-of-entries)
+                                         :weakness 'key-and-value))
+          (path-to-csv (if path-to-csv path-to-csv bibli-paris/default-path-to-csv))
+          (csv-rows (bibli-paris/parse-csv path-to-csv))
+          (entry-number 0))
     (message "Importing library entries from %s ..." path-to-csv)
     (org-map-entries (lambda ()
-                       (progn
-                         (puthash (bibli-paris/get-entry-recnum) entry-number recnum-lines)
-                         (setq entry-number (1+ entry-number)))))
-    (let ((csv-rows (bibli-paris/parse-csv path-to-csv)))
-      (bibli-paris/insert-or-update-csv-entries (car csv-rows)
-                                                (cdr csv-rows)
-                                                recnum-lines
-                                                tags
-                                                state))
-    (message "Import done.")))
+                       (puthash (bibli-paris/get-entry-recnum) entry-number recnum-lines)
+                       (setq entry-number (1+ entry-number))))
+    (bibli-paris/insert-or-update-csv-entries (car csv-rows)
+                                              (cdr csv-rows)
+                                              recnum-lines
+                                              tags
+                                              state))
+  (message "Import done."))
 
 
 ;; archive entries
@@ -398,13 +397,12 @@ STATE (string)."
   "Archive all entries in the DONE state."
   (interactive)
   (org-map-entries (lambda ()
-                     (if (equal (org-get-todo-state) "DONE")
-                         (progn
-                           ;; archiving an entry moves the cursor to next entry
-                           ;; so we move it back to the previous entry
-                           (org-archive-subtree)
-                           (setq org-map-continue-from (outline-get-last-sibling))
-                           )))))
+                     (when (equal (org-get-todo-state) "DONE")
+                       ;; archiving an entry moves the cursor to next entry
+                       ;; so we move it back to the previous entry
+                       (org-archive-subtree)
+                       (setq org-map-continue-from (outline-get-last-sibling))
+                       ))))
 
 
 ;; move between entries
