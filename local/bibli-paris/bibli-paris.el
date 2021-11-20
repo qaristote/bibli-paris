@@ -174,14 +174,25 @@ date if borrowed and set to the maximum unix date if unavailable."
       (org-schedule '(4)))))
 
 
-(defun bibli-paris/clean-quote (quote)
+(defun bibli-paris/clean-quote (entry-quote)
   "Remove extra whitespace from and uniformizes the quote QUOTE."
-  (let ((blank "[[:blank:]\r\n]+"))
-    (string-trim (replace-regexp-in-string
-                  "BD EN RESERVE" "EN RESERVE BD"
-                  (replace-regexp-in-string blank " " quote t t)
-                  t t)
-                 blank blank)))
+  (let ((blank "[[:blank:]\r\n]+")
+        (result entry-quote))
+    (setq result (replace-regexp-in-string blank " " result))
+    (message result)
+    (setq result (string-trim result blank blank))
+    (message result)
+    (setq result (replace-regexp-in-string
+                  "BD EN RESERVE"
+                  "EN RESERVE BD"
+                  result
+                  t t))
+    (message result)
+    (setq result (replace-regexp-in-string
+                  "\\([^0-9/]\\)\\([0-9]\\)\\($\\|\/\\)"
+                  "\\10\\2\\3"
+                  result))
+    result))
 
 (defun bibli-paris/update-entry-quote-from (holding)
   "Update entry quote according to HOLDING (hash-tbl) the holding data of the
