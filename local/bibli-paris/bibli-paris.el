@@ -416,10 +416,12 @@ STATE (string)."
 
 (defun bibli-paris/previous-entry ()
   "Move to and put forward the previous entry."
+  (interactive)
   (bibli-paris/change-entry 'outline-get-last-sibling))
 
 (defun bibli-paris/next-entry ()
   "Move to and put forward the next entry."
+  (interactive)
   (bibli-paris/change-entry 'outline-get-next-sibling))
 
 

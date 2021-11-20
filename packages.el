@@ -15,5 +15,8 @@
                 "mu" 'bibli-paris/update-entry
                 "mU" 'bibli-paris/update-entries
                 "mA" 'bibli-paris/archive-all-read
-                "mi" 'bibli-paris/import-from-csv))
+                "mi" 'bibli-paris/import-from-csv
+                "mk" 'bibli-paris/previous-entry
+                "mj" 'bibli-paris/next-entry
+                ))
     ))
