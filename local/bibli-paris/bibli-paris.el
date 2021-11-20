@@ -180,15 +180,12 @@ date if borrowed and set to the maximum unix date if unavailable."
   (let ((blank "[[:blank:]\r\n]+")
         (result entry-quote))
     (setq result (replace-regexp-in-string blank " " result))
-    (message result)
     (setq result (string-trim result blank blank))
-    (message result)
     (setq result (replace-regexp-in-string
                   "BD EN RESERVE"
                   "EN RESERVE BD"
                   result
                   t t))
-    (message result)
     (setq result (replace-regexp-in-string
                   "\\([^0-9/]\\)\\([0-9]\\)\\($\\|\/\\)"
                   "\\10\\2\\3"
