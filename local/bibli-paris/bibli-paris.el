@@ -373,7 +373,8 @@ STATE (string)."
                                      nil
                                      bibli-paris/default-path-to-csv)
                      (read-string "Tags : ")
-                     (read-string "State (default : TODO) : ")))
+                     (read-string "State : "
+                                  "TODO")))
   (let* ((recnum-lines (make-hash-table :test 'equal
                                          :size (bibli-paris/number-of-entries)
                                          :weakness 'key-and-value))
