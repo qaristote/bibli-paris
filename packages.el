@@ -9,13 +9,14 @@
                 "mb" 'bibli-paris/mode)
               (spacemacs/declare-prefix-for-minor-mode 'bibli-paris/mode
                                                        "m" "bibli-paris")
+              (spacemacs/declare-prefix-for-minor-mode 'bibli-paris/mode
+                                                       "mu" "update")
               (spacemacs/set-leader-keys-for-minor-mode 'bibli-paris/mode
                 "m?" 'bibli-paris/number-of-entries
                 "ms" 'bibli-paris/sort
                 "mue" 'bibli-paris/update-entry
                 "mur" 'bibli-paris/update-region
                 "mub" 'bibli-paris/update-buffer
-                "mU" 'bibli-paris/update-entries
                 "mA" 'bibli-paris/archive-all-read
                 "mi" 'bibli-paris/import-from-csv
                 "mk" 'bibli-paris/previous-entry
