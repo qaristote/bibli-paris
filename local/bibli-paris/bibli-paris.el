@@ -114,6 +114,7 @@
 
 
 ;; update entries
+;; important for parallelism : most of these functions do not move the cursor
 
 (defun bibli-paris/fetch-entry-holdings-by-id (recnum)
   "Return a deferred object that downloads JSON metadata about which library
