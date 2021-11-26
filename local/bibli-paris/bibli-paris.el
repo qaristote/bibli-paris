@@ -182,10 +182,14 @@ date if borrowed and set to the maximum unix date if unavailable."
     (setq result (replace-regexp-in-string blank " " result))
     (setq result (string-trim result blank blank))
     (setq result (replace-regexp-in-string
-                  "BD EN RESERVE"
-                  "EN RESERVE BD"
-                  result
-                  t t))
+                  "BD EN RESERVE" "EN RESERVE BD"
+                  result t t))
+    (setq result (replace-regexp-in-string
+                  "BD MANGA" "MANGA"
+                  result t t))
+    (setq result (replace-regexp-in-string
+                  "BD COMICS" "COMICS"
+                  result t t))
     (setq result (replace-regexp-in-string
                   "\\([^0-9/]\\)\\([0-9]\\)\\($\\|\/\\)"
                   "\\10\\2\\3"
