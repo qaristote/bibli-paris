@@ -11,15 +11,21 @@
                                                        "m" "bibli-paris")
               (spacemacs/declare-prefix-for-minor-mode 'bibli-paris/mode
                                                        "mu" "update")
+              (spacemacs/declare-prefix-for-minor-mode 'bibli-paris/mode
+                                                       "mt" "todo")
               (spacemacs/set-leader-keys-for-minor-mode 'bibli-paris/mode
-                "m?" 'bibli-paris/number-of-entries
+                "mi" 'bibli-paris/import-from-csv
+                "mj" 'bibli-paris/next-entry
+                "mk" 'bibli-paris/previous-entry
                 "ms" 'bibli-paris/sort
                 "mue" 'bibli-paris/update-entry
                 "mur" 'bibli-paris/update-region
                 "mub" 'bibli-paris/update-buffer
+                "mtt" 'bibli-paris/set-to-todo
+                "mtn" 'bibli-paris/set-to-next
+                "mtb" 'bibli-paris/set-to-booked
+                "mtd" 'bibli-paris/set-to-done
                 "mA" 'bibli-paris/archive-all-read
-                "mi" 'bibli-paris/import-from-csv
-                "mk" 'bibli-paris/previous-entry
-                "mj" 'bibli-paris/next-entry
+                "m?" 'bibli-paris/number-of-entries
                 ))
     ))

@@ -458,6 +458,28 @@ STATE (string)."
   (bibli-paris/change-entry 'outline-get-next-sibling))
 
 
+;; change the state of an entry
+
+(defun bibli-paris/set-to-todo ()
+  "Switch the entry at point to the TODO state."
+  (interactive)
+  (org-todo "TODO"))
+
+(defun bibli-paris/set-to-next ()
+  "Switch the entry at point to the NEXT state."
+  (interactive)
+  (org-todo "NEXT"))
+
+(defun bibli-paris/set-to-booked ()
+  "Switch the entry at point to the BOOKED state."
+  (interactive)
+  (org-todo "BOOKED"))
+
+(defun bibli-paris/set-to-done ()
+  "Switch the entry at point to the DONE state."
+  (interactive)
+  (org-todo "DONE"))
+
 ;; minor mode
 
 ;;;###autoload
