@@ -18,13 +18,18 @@
                 "mj" 'bibli-paris/next-entry
                 "mk" 'bibli-paris/previous-entry
                 "ms" 'bibli-paris/sort
+
+                ;; update
                 "mue" 'bibli-paris/update-entry
                 "mur" 'bibli-paris/update-region
                 "mub" 'bibli-paris/update-buffer
+
+                ;; todo
                 "mtt" 'bibli-paris/set-to-todo
                 "mtn" 'bibli-paris/set-to-next
                 "mtb" 'bibli-paris/set-to-booked
                 "mtd" 'bibli-paris/set-to-done
+
                 "mA" 'bibli-paris/archive-all-read
                 "m?" 'bibli-paris/number-of-entries
                 ))
