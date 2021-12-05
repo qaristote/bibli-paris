@@ -310,7 +310,6 @@ org-map-entries)"
         (seq-partition (seq-reverse pom-recnum-seq)
                        bibli-paris/max-asynchronous-processes)
         'bibli-paris/async-update-entries-at-points)
-      ;; (deferred:nextc it 'bibli-paris/sort)
       (deferred:nextc it (lambda () (message "Update done."))))))
 
 ;;;###autoload
@@ -321,9 +320,11 @@ org-map-entries)"
 
 ;;;###autoload
 (defun bibli-paris/update-buffer ()
-  "Update the schedules and quotes of the entries in the current buffer."
+  "Update the schedules and quotes of the entries in the current buffer, and
+sort it afterwards."
   (interactive)
-  (bibli-paris/update-entries-batch nil))
+  (bibli-paris/update-entries-batch nil)
+  (bibli-paris/sort))
 
 
 ;; import entries
