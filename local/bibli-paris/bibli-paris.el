@@ -351,7 +351,7 @@ inserting the heading."
                  (if (not (string-equal formatted-value ""))
                      (org-set-property formatted-key formatted-value))))
              keys row)
-    (org-toggle-tag tags 'on)))
+    (when tags (org-toggle-tag tags 'on))))
 
 (defun bibli-paris/insert-or-update-csv-entries (keys rows recnum-lines
                                                       &optional tags state)
