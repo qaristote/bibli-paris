@@ -81,10 +81,17 @@
   (car csv-entry))
 
 ;;;###autoload
-(defun bibli-paris/number-of-entries ()
-  "Return the number library entries in the current buffer."
-  (interactive)
-  (let ((result (length (org-map-entries (lambda () t)))))
+(defun bibli-paris/number-of-entries (&optional match scope)
+  "Return the number of library entries selected by MATCH in SCOPE. See also the
+[[https://orgmode.org/manual/Using-the-Mapping-API.html][Org mapping API]] for
+more on MATCH and SCOPE."
+  (interactive "sMatch : \nSScope : ")
+  (let ((result (length
+                 (org-map-entries (lambda () t)
+                                  (unless (string-equal "" match)
+                                    match)
+                                  (unless (string-equal "" (symbol-name scope))
+                                    scope)))))
     (message "%d" result)
     result))
 
