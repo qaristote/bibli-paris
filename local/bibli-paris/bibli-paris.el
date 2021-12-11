@@ -2,7 +2,6 @@
 (require 'request-deferred)
 (require 'deferred)
 (require 'cl-lib)
-(require 'subr-x)
 (require 'org)
 (require 'parse-csv)
 
