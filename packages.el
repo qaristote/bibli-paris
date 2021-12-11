@@ -3,10 +3,7 @@
 
 (defun bibli-paris/init-bibli-paris ()
   (use-package bibli-paris
-    ;; :defer t
     :config (progn
-              (spacemacs/set-leader-keys-for-major-mode 'org-mode
-                "mb" 'bibli-paris/mode)
               (spacemacs/declare-prefix-for-minor-mode 'bibli-paris/mode
                                                        "m" "bibli-paris")
               (spacemacs/declare-prefix-for-minor-mode 'bibli-paris/mode

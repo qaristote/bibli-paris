@@ -461,11 +461,13 @@ STATE (string)."
   (org-show-subtree)
   (recenter))
 
+;;;###autoload
 (defun bibli-paris/previous-entry ()
   "Move to and put forward the previous entry."
   (interactive)
   (bibli-paris/change-entry 'outline-get-last-sibling))
 
+;;;###autoload
 (defun bibli-paris/next-entry ()
   "Move to and put forward the next entry."
   (interactive)
@@ -474,25 +476,30 @@ STATE (string)."
 
 ;; change the state of an entry
 
+;;;###autoload
 (defun bibli-paris/set-to-todo ()
   "Switch the entry at point to the TODO state."
   (interactive)
   (org-todo "TODO"))
 
+;;;###autoload
 (defun bibli-paris/set-to-next ()
   "Switch the entry at point to the NEXT state."
   (interactive)
   (org-todo "NEXT"))
 
+;;;###autoload
 (defun bibli-paris/set-to-booked ()
   "Switch the entry at point to the BOOKED state."
   (interactive)
   (org-todo "BOOKED"))
 
+;;;###autoload
 (defun bibli-paris/set-to-done ()
   "Switch the entry at point to the DONE state."
   (interactive)
   (org-todo "DONE"))
+
 
 ;; minor mode
 
@@ -500,5 +507,12 @@ STATE (string)."
 (define-minor-mode bibli-paris/mode
   "Manage reading lists of documents available in Paris' libraries."
   :lighter "bibli-paris")
+
+(add-hook 'find-file-hook
+          (lambda ()
+            (when (and (string= (file-name-base buffer-file-name) "Bibliothèques de Paris")
+                       (string-prefix-p "org" (file-name-extension buffer-file-name)))
+              (bibli-paris/mode +1))))
+
 
 (provide 'bibli-paris)
