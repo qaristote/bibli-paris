@@ -299,7 +299,7 @@ POM-RECNUM-SEQ, fetching the corresponding data asynchronously."
   "Update all entries' schedules and quotes, fetching the corresponding data
 sequentially. Terribly inefficient but works."
   (let ((poms (org-map-entries 'point)))
-    (deferred:loop
+    (deferred:loop ;; acutally doesn't work ?
       (seq-reverse poms)
       (lambda (pom) (deferred:$
                       (deferred:call 'goto-char pom)
