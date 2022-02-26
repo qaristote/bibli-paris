@@ -299,7 +299,7 @@ POM-RECNUM-SEQ, fetching the corresponding data asynchronously."
   "Update all entries' schedules and quotes, fetching the corresponding data
 sequentially. Terribly inefficient but works."
   (let ((poms (org-map-entries 'point)))
-    (deferred:loop ;; acutally doesn't work ?
+    (deferred:loop
       (seq-reverse poms)
       (lambda (pom) (deferred:$
                       (deferred:call 'goto-char pom)
@@ -335,7 +335,8 @@ org-map-entries)"
   "Update the schedules and quotes of the entries in the current buffer, and
 sort it afterwards."
   (interactive)
-  (bibli-paris/update-entries-batch nil)
+  ;; (bibli-paris/update-entries-batch nil)
+  (bibli-paris/update-entries-sequential)
   (bibli-paris/sort))
 
 
