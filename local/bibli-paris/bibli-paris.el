@@ -510,7 +510,7 @@ STATE (string)."
 
 (add-hook 'find-file-hook
           (lambda ()
-            (when (and (string= (file-name-base buffer-file-name) "Bibliothèques de Paris")
+            (when (and (string-suffix-p "Bibliothèques de Paris/" (file-name-directory buffer-file-name))
                        (string-prefix-p "org" (file-name-extension buffer-file-name)))
               (bibli-paris/mode +1))))
 
