@@ -459,7 +459,7 @@ STATE (string)."
   (org-hide-entry)
   (funcall move-fun)
   (org-show-subtree)
-  (recenter))
+  (recenter 5))
 
 ;;;###autoload
 (defun bibli-paris/previous-entry ()
