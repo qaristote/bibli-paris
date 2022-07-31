@@ -1,5 +1,6 @@
 (require 'request)
 (require 'request-deferred)
+(require 'concurrent)
 (require 'deferred)
 (require 'cl-lib)
 (require 'org)
@@ -30,6 +31,9 @@
   500
   "The maximum number of asynchronous processes that can be launched by Emacs.
    Determined experimentally.")
+
+(defvar bibli-paris/async-processes-smp
+  (cc:semaphore-create bibli-paris/max-asynchronous-processes))
 
 (defvar bibli-paris/default-path-to-csv
   "~/Downloads/Export.csv"
@@ -123,24 +127,28 @@ more on MATCH and SCOPE."
 ;; important for parallelism : most of these functions do not move the cursor
 
 (defun bibli-paris/fetch-entry-holdings-by-id (recnum)
-  "Return a deferred object that downloads JSON metadata about which library
-have the entry specified by its record number RECNUM (string) available."
+  "Given an entry specified by its record number RECNUM (string), return a
+ deferred object that downloads JSON metadata on which libraries have the entry
+ available."
   (deferred:$
-    (request-deferred bibli-paris/holdings-api-url
-                      :type "POST"
-                      :data (json-encode
-                             `(,`("Record" .
-                                  ,`(("Docbase" . "Syracuse")
-                                     ,`("RscId" . ,recnum)))))
-                      :headers '(("Content-Type" . "application/json"))
-                      :encoding 'utf-8
-                      :parser (lambda ()
-                                (let ((json-object-type 'hash-table)
-                                      (json-array-type 'list)
-                                      (json-key-type 'string))
-                                  (json-read))))
+    (deferred:nextc (cc:semaphore-acquire bibli-paris/async-processes-smp)
+      (lambda ()
+        (request-deferred bibli-paris/holdings-api-url
+          :type "POST"
+          :data (json-encode
+                 `(,`("Record" .
+                      ,`(("Docbase" . "Syracuse")
+                         ,`("RscId" . ,recnum)))))
+          :headers '(("Content-Type" . "application/json"))
+          :encoding 'utf-8
+          :parser (lambda ()
+                    (let ((json-object-type 'hash-table)
+                          (json-array-type 'list)
+                          (json-key-type 'string))
+                      (json-read))))))
     (deferred:nextc it
       (lambda (response)
+        (progn (cc:semaphore-release bibli-paris/async-processes-smp)
         (let ((error-thrown (request-response-error-thrown response)))
           (if error-thrown
               (let ((error-symbol (car error-thrown))
@@ -148,7 +156,9 @@ have the entry specified by its record number RECNUM (string) available."
                 (signal error-symbol error-data))
             (let* ((data (request-response-data response))
                    (d (gethash "d" data)))
-              (if d (gethash "Holdings" d) nil))))))))
+              (if d (gethash "Holdings" d) nil)))))))
+    ))
+
 
 (defun bibli-paris/find-library-holding (holdings &optional library)
   "Find the holding data corresponding to the library LIBRARY (string) in
@@ -262,80 +272,48 @@ at the central library."
      (bibli-paris/fetch-entry-holdings-by-id (bibli-paris/get-entry-recnum))
      (deferred:nextc it 'bibli-paris/update-entry-from)))
 
-(defun bibli-paris/async-update-entries-at-points (pom-recnum-seq)
-  "Update all entries specified by their positions and record numbers in
-POM-RECNUM-SEQ, fetching the corresponding data asynchronously."
-  (let ((pom-holdingsd-seq
-         (seq-map
-          (lambda (pom-recnum)
-            (let ((pom (car pom-recnum))
-                  (recnum (cdr pom-recnum)))
-              `(,pom . ,(deferred:$
-                          (deferred:call 'message
-                            "Fetching holdings for %s (%s) ..."
-                            (bibli-paris/get-entry-title pom)
-                            (bibli-paris/get-entry-author pom))
-                          (bibli-paris/fetch-entry-holdings-by-id recnum)))))
-          pom-recnum-seq)))
-    (seq-reduce
-     (lambda (prevd pom-holdingsd)
-       (let ((pom (car pom-holdingsd))
-             (holdingsd (cdr pom-holdingsd)))
-         (deferred:$
-           (deferred:parallel
-             (deferred:$ prevd (deferred:nextc it `(lambda () ,pom)))
-             holdingsd)
-           (deferred:nextc it
-             (lambda (pom-holdings)
-               (let ((pom (car pom-holdings))
-                     (holdings (car (cdr pom-holdings))))
-                 (save-excursion
-                   (goto-char pom)
-                   (bibli-paris/update-entry-from holdings))))))))
-     pom-holdingsd-seq
-     (deferred:call 'message "Updating batch ..."))))
+(defun bibli-paris/update-entries-async (&optional match scope)
+  (let ((holdingsd-seq (org-map-entries
+                        (lambda ()
+                          (bibli-paris/fetch-entry-holdings-by-id
+                           (bibli-paris/get-entry-recnum)))
+                        match scope)))
+    (deferred:$
+      (deferred:call 'message "(bibli-paris) Fetching holdings ...")
+      (deferred:parallel holdingsd-seq)
+      (deferred:nextc it
+        `(lambda (holdings-seq)
+          (org-map-entries (lambda ()
+                             (let ((holdings (pop holdings-seq)))
+                               (bibli-paris/update-entry-from holdings)))
+                           ',match ',scope)))
+      (deferred:nextc it
+        (lambda () (progn
+                     (cc:semaphore-release-all bibli-paris/async-processes-smp)
+                     (message "Update done.")))))))
 
-(defun bibli-paris/update-entries-sequential ()
+(defun bibli-paris/update-entries-sequential (&optional match scope)
   "Update all entries' schedules and quotes, fetching the corresponding data
 sequentially. Terribly inefficient but works."
-  (let ((poms (org-map-entries 'point)))
+  (let ((poms (org-map-entries 'point match scope)))
     (deferred:loop
       (seq-reverse poms)
       (lambda (pom) (deferred:$
                       (deferred:call 'goto-char pom)
                       (deferred:nextc it 'bibli-paris/update-entry))))))
 
-(defun bibli-paris/update-entries-batch (scope)
-  "Update schedules and quotes, by batches so as to prevent emacs from opening
-too many files, for every entry in the SCOPE (see the documentation entry for
-org-map-entries)"
-  (let ((pom-recnum-seq (org-map-entries
-                         (lambda ()
-                           ;; (point) is incremented to prevent off-by-one
-                           ;; errors when navigating the buffer
-                           `(,(+ 5 (point)) . ,(bibli-paris/get-entry-recnum)))
-                         nil scope)))
-    (message "%s" pom-recnum-seq)
-    (deferred:$
-      (deferred:next (lambda () (message "Update started.")))
-      (deferred:loop
-        (seq-partition (seq-reverse pom-recnum-seq)
-                       bibli-paris/max-asynchronous-processes)
-        'bibli-paris/async-update-entries-at-points)
-      (deferred:nextc it (lambda () (message "Update done."))))))
-
 ;;;###autoload
 (defun bibli-paris/update-region ()
   "Update the schedules and quotes of the entries in the current region."
   (interactive)
-  (bibli-paris/update-entries-batch 'region))
+  (bibli-paris/update-entries-async nil 'region))
 
 ;;;###autoload
 (defun bibli-paris/update-buffer ()
   "Update the schedules and quotes of the entries in the current buffer, and
 sort it afterwards."
   (interactive)
-  ;; (bibli-paris/update-entries-batch nil)
+  ;; (bibli-paris/update-entries-async)
   (bibli-paris/update-entries-sequential)
   (bibli-paris/sort))
 
