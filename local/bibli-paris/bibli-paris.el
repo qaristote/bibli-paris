@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (require 'request)
 (require 'request-deferred)
 (require 'concurrent)
@@ -27,13 +29,17 @@
   (concat bibli-paris/base-url "Default/doc/SYRACUSE/")
   "The base URL of an entry's webpage.")
 
-(defvar bibli-paris/max-asynchronous-processes
-  500
-  "The maximum number of asynchronous processes that can be launched by Emacs.
-   Determined experimentally.")
+(defvar bibli-paris/max-async-requests
+  250
+  "The maximum number of concurrent requests.")
 
-(defvar bibli-paris/async-processes-smp
-  (cc:semaphore-create bibli-paris/max-asynchronous-processes))
+(defvar bibli-paris/async-requests-smp
+  (cc:semaphore-create bibli-paris/max-async-requests)
+  "The semaphore blocking too many concurrent requests.")
+
+(defvar bibli-paris/request-timeout
+  "1 sec"
+  "The timeout of a request to the Paris' libaries API.")
 
 (defvar bibli-paris/default-path-to-csv
   "~/Downloads/Export.csv"
@@ -110,17 +116,17 @@ more on MATCH and SCOPE."
     (set-mark (point-min))
     (goto-char (point-max))
     ;; run org-sort
-    (org-sort-entries nil
-                      ?f
-                      ;; order entries by their quotes (the quote in the main
-                      ;; library having higher priority)
-                      #'(lambda () (save-excursion
-                                     (org-end-of-meta-data)
-                                     (forward-line)
-                                     (let ((main-quote (thing-at-point 'line t))
-                                           (other-quotes (bibli-paris/get-entry-quotes)))
-                                       ;; (message "%s" result)
-                                       (concat main-quote " " other-quotes)))))))
+    (org-sort-entries
+     nil
+     ?f
+     ;; order entries by their quotes (the quote in the main
+     ;; library having higher priority)
+     #'(lambda () (save-excursion
+                    (org-end-of-meta-data)
+                    (forward-line)
+                    (let ((main-quote (thing-at-point 'line t))
+                          (other-quotes (bibli-paris/get-entry-quotes)))
+                      (concat main-quote " " other-quotes)))))))
 
 
 ;; update entries
@@ -131,10 +137,11 @@ more on MATCH and SCOPE."
  deferred object that downloads JSON metadata on which libraries have the entry
  available."
   (deferred:$
-    (deferred:nextc (cc:semaphore-acquire bibli-paris/async-processes-smp)
+    (deferred:nextc (cc:semaphore-acquire bibli-paris/async-requests-smp)
       (lambda ()
         (request-deferred bibli-paris/holdings-api-url
           :type "POST"
+          :timeout bibli-paris/request-timeout
           :data (json-encode
                  `(,`("Record" .
                       ,`(("Docbase" . "Syracuse")
@@ -148,16 +155,16 @@ more on MATCH and SCOPE."
                       (json-read))))))
     (deferred:nextc it
       (lambda (response)
-        (progn (cc:semaphore-release bibli-paris/async-processes-smp)
-        (let ((error-thrown (request-response-error-thrown response)))
-          (if error-thrown
-              (let ((error-symbol (car error-thrown))
-                    (error-data (cdr error-thrown)))
-                (signal error-symbol error-data))
-            (let* ((data (request-response-data response))
-                   (d (gethash "d" data)))
-              (if d (gethash "Holdings" d) nil)))))))
-    ))
+        (progn
+          (cc:semaphore-release bibli-paris/async-requests-smp)
+          (let ((error-thrown (request-response-error-thrown response)))
+            (if error-thrown
+                (let ((error-symbol (car error-thrown))
+                      (error-data (cdr error-thrown)))
+                  (signal error-symbol error-data))
+              (let* ((data (request-response-data response))
+                     (d (gethash "d" data)))
+                (if d (gethash "Holdings" d) nil)))))))))
 
 
 (defun bibli-paris/find-library-holding (holdings &optional library)
@@ -237,7 +244,8 @@ entry from a library."
       (setq end (point))
       (delete-region begin end)
       (newline)
-      (message "Set quote to \"%s\"" new-quote))))
+      (message "Set quote to \"%s\"" new-quote)
+      )))
 
 (defun bibli-paris/update-availability-at-central-library (holdings)
   "Update entry tags according to whether it is held in HOLDINGS (hash-tbl list)
@@ -255,7 +263,7 @@ at the central library."
   (let ((holding (if holdings
                      (bibli-paris/find-library-holding holdings)
                    nil)))
-    (message "Updating %s (%s) ..." (bibli-paris/get-entry-title) (bibli-paris/get-entry-author))
+    (message "(bibli-paris) Updating %s (%s) ..." (bibli-paris/get-entry-title) (bibli-paris/get-entry-author))
     (bibli-paris/update-entry-schedule-from holding)
     (bibli-paris/update-entry-quote-from holding)
     (bibli-paris/update-availability-at-central-library holdings)))
@@ -266,41 +274,43 @@ at the central library."
   (interactive)
    (deferred:$
      (deferred:call 'message
-       "Fetching holdings for %s (%s) ..."
+       "(bibli-paris) Fetching holdings for %s (%s) ..."
        (bibli-paris/get-entry-title)
        (bibli-paris/get-entry-author))
      (bibli-paris/fetch-entry-holdings-by-id (bibli-paris/get-entry-recnum))
      (deferred:nextc it 'bibli-paris/update-entry-from)))
 
 (defun bibli-paris/update-entries-async (&optional match scope)
-  (let ((holdingsd-seq (org-map-entries
-                        (lambda ()
-                          (bibli-paris/fetch-entry-holdings-by-id
-                           (bibli-paris/get-entry-recnum)))
-                        match scope)))
     (deferred:$
       (deferred:call 'message "(bibli-paris) Fetching holdings ...")
-      (deferred:parallel holdingsd-seq)
+      (deferred:parallel
+        (org-map-entries
+         (lambda ()
+           (let ((recnum (bibli-paris/get-entry-recnum))
+                 (title (bibli-paris/get-entry-title))
+                 (author (bibli-paris/get-entry-author)))
+             (deferred:$
+               (bibli-paris/fetch-entry-holdings-by-id recnum)
+               (deferred:nextc it
+                 (lambda (x)
+                   (progn
+                     (message "(bibli-paris) Fetched holdings for %s (%s)."
+                              title author))
+                   x)))))
+         match scope))
       (deferred:nextc it
-        `(lambda (holdings-seq)
-          (org-map-entries (lambda ()
-                             (let ((holdings (pop holdings-seq)))
-                               (bibli-paris/update-entry-from holdings)))
-                           ',match ',scope)))
+        (lambda (holdings-seq)
+           (org-map-entries (lambda ()
+                              (let ((holdings (pop holdings-seq)))
+                                (bibli-paris/update-entry-from holdings)))
+                            match scope)))
       (deferred:nextc it
-        (lambda () (progn
-                     (cc:semaphore-release-all bibli-paris/async-processes-smp)
-                     (message "Update done.")))))))
+        (lambda () (message "(bibli-paris) Update complete.")))))
 
 (defun bibli-paris/update-entries-sequential (&optional match scope)
   "Update all entries' schedules and quotes, fetching the corresponding data
 sequentially. Terribly inefficient but works."
-  (let ((poms (org-map-entries 'point match scope)))
-    (deferred:loop
-      (seq-reverse poms)
-      (lambda (pom) (deferred:$
-                      (deferred:call 'goto-char pom)
-                      (deferred:nextc it 'bibli-paris/update-entry))))))
+  (org-map-entries 'bibli-paris/update-entry match scope))
 
 ;;;###autoload
 (defun bibli-paris/update-region ()
@@ -313,8 +323,7 @@ sequentially. Terribly inefficient but works."
   "Update the schedules and quotes of the entries in the current buffer, and
 sort it afterwards."
   (interactive)
-  ;; (bibli-paris/update-entries-async)
-  (bibli-paris/update-entries-sequential)
+  (bibli-paris/update-entries-async)
   (bibli-paris/sort))
 
 
@@ -322,9 +331,9 @@ sort it afterwards."
 
 (defun bibli-paris/insert-csv-entry (keys row &optional tags state old)
   "Insert at point a new entry described by a list of keys KEYS and associated
-values in ROW, and set the tags TAGS (string seq) and the state STATE (string that
-defaults to TODO.). If OLD is not nil, only update the properties and tags without
-inserting the heading."
+values in ROW, and set the tags TAGS (string seq) and the state STATE (string
+that defaults to TODO.). If OLD is not nil, only update the properties and tags
+without inserting the heading."
   (let* ((title (bibli-paris/get-csv-title row))
          (recnum (bibli-paris/get-csv-recnum row))
          (heading (format "* %s [[%s][%s]]"
