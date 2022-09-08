@@ -156,15 +156,16 @@ more on MATCH and SCOPE."
     (deferred:nextc it
       (lambda (response)
         (progn
-          (cc:semaphore-release bibli-paris/async-requests-smp)
-          (let ((error-thrown (request-response-error-thrown response)))
-            (if error-thrown
-                (let ((error-symbol (car error-thrown))
-                      (error-data (cdr error-thrown)))
-                  (signal error-symbol error-data))
-              (let* ((data (request-response-data response))
-                     (d (gethash "d" data)))
-                (if d (gethash "Holdings" d) nil)))))))))
+          (when response
+            (cc:semaphore-release bibli-paris/async-requests-smp)
+            (let ((error-thrown (request-response-error-thrown response)))
+              (if error-thrown
+                  (let ((error-symbol (car error-thrown))
+                        (error-data (cdr error-thrown)))
+                    (signal error-symbol error-data))
+                (let* ((data (request-response-data response))
+                       (d (gethash "d" data)))
+                  (if d (gethash "Holdings" d) nil)))))))))
 
 
 (defun bibli-paris/find-library-holding (holdings &optional library)
