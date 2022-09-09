@@ -165,7 +165,7 @@ more on MATCH and SCOPE."
                     (signal error-symbol error-data))
                 (let* ((data (request-response-data response))
                        (d (gethash "d" data)))
-                  (if d (gethash "Holdings" d) nil)))))))))
+                  (if d (gethash "Holdings" d) nil))))))))))
 
 
 (defun bibli-paris/find-library-holding (holdings &optional library)
