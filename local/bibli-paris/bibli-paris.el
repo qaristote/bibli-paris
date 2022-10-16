@@ -359,7 +359,7 @@ without inserting the heading."
   "Insert entries described by a list of keys KEYS and associated to values in
 ROW at the end of the buffer. Also set the tags TAGS (string seq) and the state
 STATE (string that defaults to TODO.). If an entry has a record number found in
-RECNUM-POMS (string to marker hash table), only update the entry at
+RECNUM-LINES (string to marker hash table), only update the entry at
 corresponding point (without inserting the heading)."
   ;; TODO : remove race conditions
   (seq-do (lambda (row)
@@ -409,7 +409,7 @@ STATE (string)."
                                   "TODO")))
   (let* ((recnum-lines (make-hash-table :test 'equal
                                          :size (bibli-paris/number-of-entries)
-                                         :weakness 'key-and-value))
+                                         :weakness nil))
           (path-to-csv (if path-to-csv path-to-csv bibli-paris/default-path-to-csv))
           (csv-rows (bibli-paris/parse-csv path-to-csv))
           (entry-number 0))
@@ -421,7 +421,8 @@ STATE (string)."
                                               (cdr csv-rows)
                                               recnum-lines
                                               tags
-                                              state))
+                                              state)
+    (clrhash recnum-lines))
   (message "Import done."))
 
 
