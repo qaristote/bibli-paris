@@ -324,8 +324,9 @@ sequentially. Terribly inefficient but works."
   "Update the schedules and quotes of the entries in the current buffer, and
 sort it afterwards."
   (interactive)
-  (bibli-paris/update-entries-async)
-  (bibli-paris/sort))
+  (deferred:$
+    (bibli-paris/update-entries-async)
+    (deferred:nextc it 'bibli-paris/sort)))
 
 
 ;; import entries
