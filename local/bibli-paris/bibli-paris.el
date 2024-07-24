@@ -29,8 +29,10 @@
   (concat bibli-paris/base-url "Default/doc/SYRACUSE/")
   "The base URL of an entry's webpage.")
 
+;; The website seems to be doing rate-limiting hence the low value.
+;; In practice this one seems to work, I don't know what the exact limit is.
 (defvar bibli-paris/max-async-requests
-  250
+  16
   "The maximum number of concurrent requests.")
 
 (defvar bibli-paris/async-requests-smp
